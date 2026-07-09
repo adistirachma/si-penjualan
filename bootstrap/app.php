@@ -16,5 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\PDOException $e, $request) {
+            return response()->view('errors.db', ['message' => $e->getMessage()], 500);
+        });
+        $exceptions->render(function (\Illuminate\Database\QueryException $e, $request) {
+            return response()->view('errors.db', ['message' => $e->getMessage()], 500);
+        });
     })->create();
