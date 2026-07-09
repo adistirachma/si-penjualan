@@ -142,7 +142,7 @@
         </button>
         <div>
           <div class="topbar-title">@yield('page-title', 'Dashboard')</div>
-          <div class="topbar-subtitle">Sistem Informasi Peramalan Penjualan</div>
+          <div class="topbar-subtitle">Sistem Informasi Peramalan Penjualan xxxxx</div>
         </div>
       </div>
       <div class="app-topbar-right">
