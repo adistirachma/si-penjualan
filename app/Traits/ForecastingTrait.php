@@ -59,34 +59,38 @@ trait ForecastingTrait
 
     protected function holtDamped(array $series, float $alpha, float $beta, float $phi, int $periods): array
     {
+        $n     = count($series);
         $level = $series[0];
-        $trend = $series[1] - $series[0]; 
+        $trend = $series[1] - $series[0];
 
-        $count = count($series);
-        for ($i = 1; $i < $count; $i++) {
-            $value = $series[$i];
-            $previousLevel = $level;
-
-            $level = $alpha * $value + (1 - $alpha) * ($level + $phi * $trend);
-            $trend = $beta * ($level - $previousLevel) + (1 - $beta) * $phi * $trend;
+        // Update level & trend untuk setiap titik data ke-2 hingga terakhir
+        // Loop mulai dari i=1 (t=2) hingga i=n-1 (t=n), sesuai Excel
+        for ($i = 1; $i < $n; $i++) {
+            $prevLevel = $level;
+            $level = $alpha * $series[$i] + (1 - $alpha) * ($level + $phi * $trend);
+            $trend = $beta  * ($level - $prevLevel) + (1 - $beta) * $phi * $trend;
         }
+        // Setelah loop: $level = L(n), $trend = T(n) — kondisi akhir persis seperti Excel
 
+        // Hitung forecast h langkah ke depan menggunakan geometric-sum damped formula:
+        // F(n+h) = L(n) + (phi^1 + phi^2 + ... + phi^h) * T(n)
+        //        = L(n) + phi * (1 - phi^h) / (1 - phi) * T(n)  [jika phi != 1]
         $forecasts = [];
-        for ($m = 1; $m <= $periods; $m++) {
-            if (abs($phi - 1.0) < 0.000001) {
-                $forecast = $level + ($m * $trend);
+        $phiSum    = 0.0;
+        for ($h = 1; $h <= $periods; $h++) {
+            $phiSum += pow($phi, $h);
+            if (abs($phi - 1.0) < 1e-9) {
+                $forecasts[] = $level + $h * $trend;
             } else {
-                $forecast = $level + ($phi * (1 - pow($phi, $m)) / (1 - $phi)) * $trend;
+                $forecasts[] = $level + $phiSum * $trend;
             }
-
-            $forecasts[] = $forecast;
         }
 
         return [
             'level'     => $level,
             'trend'     => $trend,
             'forecasts' => $forecasts,
-            'forecast'  => $forecasts[$periods - 1] ?? $level,
+            'forecast'  => $forecasts[0] ?? $level,
         ];
     }
 
@@ -110,16 +114,12 @@ trait ForecastingTrait
         $countAll   = 0;
 
         for ($i = 1; $i < $n; $i++) {
-            // One-step-ahead forecast (float) – digunakan untuk update level/trend
-            $predictedFloat = $level + $phi * $trend;
+            // One-step-ahead forecast menggunakan nilai FLOAT (presisi tinggi, sesuai Excel)
+            $predicted = $level + $phi * $trend;
+            $actual    = $series[$i];
 
-            // Nilai ramalan yang "terlihat" di tabel = dibulatkan ke integer (sesuai Excel)
-            $predictedRounded = round($predictedFloat);
-
-            $actual = $series[$i];
-
-            // Error dihitung dari nilai BULAT (konsisten dengan Excel)
-            $error = $actual - $predictedRounded;
+            // Error dihitung dari nilai float agar tepat sama dengan Excel
+            $error = $actual - $predicted;
 
             $sumError   += abs($error);
             $sumSqError += $error * $error;
@@ -131,7 +131,7 @@ trait ForecastingTrait
                 $countApe++;
             }
 
-            // Update level & trend menggunakan nilai FLOAT agar smoothing presisi
+            // Update level & trend menggunakan nilai FLOAT
             $prevLevel = $level;
             $level = $alpha * $actual + (1 - $alpha) * ($level + $phi * $trend);
             $trend = $beta  * ($level - $prevLevel) + (1 - $beta) * $phi * $trend;
