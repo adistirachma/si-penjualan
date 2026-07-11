@@ -56,7 +56,7 @@
             />
           </div>
           @php
-            $fcProductId = old('product_id') ?: (session('forecast_results')['product']['id'] ?? '');
+            $fcProductId = old('product_id') ?: ($forecastResult['product']['id'] ?? '');
           @endphp
           <input type="hidden" name="product_id" id="fc_product_id" value="{{ $fcProductId }}" required />
 
@@ -94,7 +94,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
           <label class="form-label" style="margin:0;">Rentang Periode Data Historis <span class="required" id="req-star">*</span></label>
           <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-size:.72rem;color:#64748b;user-select:none;">
-            <input type="checkbox" name="use_all_data" id="use_all_data" onchange="toggleDateInputs(this.checked)" style="width:14px;height:14px;cursor:pointer;" {{ old('use_all_data', (session('forecast_results') && empty(session('forecast_results')['start_month'])) ? 'on' : '') === 'on' ? 'checked' : '' }} />
+            <input type="checkbox" name="use_all_data" id="use_all_data" onchange="toggleDateInputs(this.checked)" style="width:14px;height:14px;cursor:pointer;" {{ old('use_all_data', ($forecastResult && empty($forecastResult['start_month'])) ? 'on' : '') === 'on' ? 'checked' : '' }} />
             Gunakan Semua Data
           </label>
         </div>
@@ -103,7 +103,7 @@
           <div style="flex:1;display:flex;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:0 .75rem;height:42px;box-shadow:0 1px 2px rgba(0,0,0,.05);">
             <span style="color:#94a3b8;font-size:.62rem;font-weight:700;text-transform:uppercase;margin-right:.6rem;flex-shrink:0;">Dari</span>
             <input type="month" name="start_month" id="start_month"
-              value="{{ old('start_month', session('forecast_results')['start_month'] ?? '') }}"
+              value="{{ old('start_month', $forecastResult['start_month'] ?? '') }}"
               style="border:none;flex:1;font-size:.82rem;color:#1e293b;outline:none;background:transparent;padding:0;" />
           </div>
           <div style="color:#cbd5e1;flex-shrink:0;">
@@ -112,7 +112,7 @@
           <div style="flex:1;display:flex;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:0 .75rem;height:42px;box-shadow:0 1px 2px rgba(0,0,0,.05);">
             <span style="color:#94a3b8;font-size:.62rem;font-weight:700;text-transform:uppercase;margin-right:.6rem;flex-shrink:0;">Sampai</span>
             <input type="month" name="end_month" id="end_month"
-              value="{{ old('end_month', session('forecast_results')['end_month'] ?? '') }}"
+              value="{{ old('end_month', $forecastResult['end_month'] ?? '') }}"
               style="border:none;flex:1;font-size:.82rem;color:#1e293b;outline:none;background:transparent;padding:0;" />
           </div>
         </div>
@@ -195,7 +195,7 @@
               <option value="auto">Otomatis</option>
             </select>
             <input type="number" id="alpha" name="alpha" step="0.001" min="0.001" max="0.999"
-              value="{{ old('alpha', session('forecast_results')['alpha'] ?? 0.3) }}"
+              value="{{ old('alpha', $forecastResult['alpha'] ?? 0.3) }}"
               class="form-input" style="flex:1;" required />
           </div>
           <p class="form-hint">Pemulusan level (0–1)</p>
@@ -219,7 +219,7 @@
               <option value="auto">Otomatis</option>
             </select>
             <input type="number" id="beta" name="beta" step="0.001" min="0.001" max="0.999"
-              value="{{ old('beta', session('forecast_results')['beta'] ?? 0.1) }}"
+              value="{{ old('beta', $forecastResult['beta'] ?? 0.1) }}"
               class="form-input" style="flex:1;" required />
           </div>
           <p class="form-hint">Pemulusan tren (0–1)</p>
@@ -243,7 +243,7 @@
               <option value="auto">Otomatis</option>
             </select>
             <input type="number" id="phi" name="phi" step="0.001" min="0.001" max="0.999"
-              value="{{ old('phi', session('forecast_results')['phi'] ?? 0.9) }}"
+              value="{{ old('phi', $forecastResult['phi'] ?? 0.9) }}"
               class="form-input" style="flex:1;" required />
           </div>
           <p class="form-hint">Faktor damping tren (0–1)</p>
@@ -262,7 +262,7 @@
           Jumlah Periode Peramalan (bulan ke depan) <span class="required">*</span>
         </label>
         <input type="number" name="periods" id="periods" min="1"
-          value="{{ old('periods', session('forecast_results')['periods'] ?? 3) }}"
+          value="{{ old('periods', $forecastResult['periods'] ?? 3) }}"
           class="form-input {{ $errors->has('periods') ? 'is-invalid' : '' }}"
           style="max-width:180px;" required />
         <p class="form-hint">Tidak boleh melebihi jumlah data historis yang digunakan.</p>
@@ -285,9 +285,13 @@
 
 
 {{-- ==================== HASIL PERAMALAN ==================== --}}
-@if(session('forecast_results'))
+@php
+  // Baca dari view variable (Vercel: return view) atau session (localhost: redirect->with)
+  $forecastResult = $forecast_results ?? session('forecast_results');
+@endphp
+@if($forecastResult)
   @php
-    $result = session('forecast_results');
+    $result = $forecastResult;
     $nextRows = collect($result['table_rows'])->where('is_next', true)->values();
     $nextRow  = $nextRows->first();
     $nextLabel    = $nextRow['period'] ?? '-';
@@ -566,7 +570,7 @@
 <script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
 <script>
 // ── Searchable Product Dropdown ────────────────────────────────────────────
-const fcSelectedId = '{{ $fcProductId ?? '' }}';
+const fcSelectedId = '{{ $forecastResult["product"]["id"] ?? "" }}';
 
 document.addEventListener('DOMContentLoaded', function() {
   // Pre-select saved product
@@ -730,9 +734,9 @@ function runAutoOptimize() {
 }
 
 // ── Chart & Auto-scroll ────────────────────────────────────────────────────
-@if(session('forecast_results'))
+@if($forecastResult)
   (function () {
-    const result = @json(session('forecast_results'));
+    const result = @json($forecastResult);
     const ctx = document.getElementById('forecast-chart-main');
     if (!ctx) return;
 

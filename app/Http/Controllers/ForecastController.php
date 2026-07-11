@@ -16,7 +16,10 @@ class ForecastController extends Controller
     {
         $products = Product::query()->orderBy('name', 'asc')->get();
 
-        return view('forecasting.index', compact('products'));
+        return view('forecasting.index', [
+            'products'         => $products,
+            'forecast_results' => null,
+        ]);
     }
 
     /**
@@ -200,10 +203,9 @@ class ForecastController extends Controller
             'rmse'            => $metrics['rmse'],
         ]);
 
-        return redirect()
-            ->route('forecasting.index')
-            ->withFragment('forecast-result-section')
-            ->with('forecast_results', [
+        return view('forecasting.index', [
+            'products'        => Product::query()->orderBy('name', 'asc')->get(),
+            'forecast_results' => [
                 'product'        => ['id' => $product->id, 'name' => $product->name, 'variasi' => $product->variasi],
                 'start_month'    => $startM,
                 'end_month'      => $endM,
@@ -222,7 +224,8 @@ class ForecastController extends Controller
                 'mape'           => $metrics['mape'],
                 'mae'            => $metrics['mae'],
                 'rmse'           => $metrics['rmse'],
-            ]);
+            ],
+        ]);
     }
 
     /**
