@@ -4,7 +4,7 @@
     },
     "routes": [
         {
-            "src": "/(css|js|img|images|build|icon|flaticon|images|assets)/(.*)",
+            "src": "/(css|js|img|images|build|icon|flaticon|assets)/(.*)",
             "dest": "/public/$1/$2"
         },
         {
@@ -14,8 +14,8 @@
     ],
     "env": {
         "APP_ENV": "production",
-        "APP_URL": "https://smkn2mojokerto.vercel.app",
-        "APP_DEBUG": "true",
+        "APP_URL": "https://si-penjualan.vercel.app",
+        "APP_DEBUG": "false",
         "APP_CONFIG_CACHE": "/tmp/config.php",
         "APP_CONFIG_EVENTS_CACHE": "/tmp/events.php",
         "APP_PACKAGES_CACHE": "/tmp/packages.php",
@@ -24,6 +24,7 @@
         "VIEW_COMPILED_PATH": "/tmp",
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "cookie"
+        "SESSION_DRIVER": "cookie",
+        "SESSION_SECURE_COOKIE": "true"
     }
 }

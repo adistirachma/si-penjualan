@@ -24,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useTailwind();
 
         // Force HTTPS in production (to fix Vercel mixed content error)
-        if (env('APP_ENV') === 'production') {
+        if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
     }

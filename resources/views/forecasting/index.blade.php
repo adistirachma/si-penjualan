@@ -5,6 +5,11 @@
 
 @section('content')
 
+@php
+  // Baca dari view variable (Vercel: return view) atau session (localhost: redirect->with)
+  $forecastResult = $forecast_results ?? session('forecast_results');
+@endphp
+
 <div style="margin-bottom:1.1rem;">
   <h2 style="font-size:1.05rem;font-weight:700;color:#0f172a;margin:0;">Forecasting Penjualan</h2>
   <p style="font-size:.75rem;color:#94a3b8;margin:.15rem 0 0;">Masukkan parameter &alpha;, &beta;, &phi; dan horizon peramalan, lalu jalankan peramalan</p>
@@ -285,10 +290,6 @@
 
 
 {{-- ==================== HASIL PERAMALAN ==================== --}}
-@php
-  // Baca dari view variable (Vercel: return view) atau session (localhost: redirect->with)
-  $forecastResult = $forecast_results ?? session('forecast_results');
-@endphp
 @if($forecastResult)
   @php
     $result = $forecastResult;
